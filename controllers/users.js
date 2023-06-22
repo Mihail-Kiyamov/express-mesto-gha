@@ -8,7 +8,10 @@ module.exports.getAllUsers = (req, res) => {
 
 module.exports.getUser = (req, res) => {
   User.findById(req.params.id)
-    .then(user => res.send({ data: user }))
+    .then(user => {
+      if (!user) return res.status(404).send({ message: 'Запрашиваемый пользователь не найден' });
+      return res.status(200).send(user);
+    })
     .catch(err => {
       if (err.name === 'DocumentNotFoundError') return res.status(404).send({ message: 'Запрашиваемый пользователь не найден' });
       if (err.name === 'CastError') return res.status(400).send({ message: 'Переданы некорректные данные пользователя' });
