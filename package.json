@@ -15,6 +15,7 @@
   "devDependencies": {
     "eslint": "^8.42.0",
     "eslint-config-airbnb": "^19.0.4",
+    "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-jsx-a11y": "^6.7.1",
     "eslint-plugin-react": "^7.32.2",
@@ -62,7 +63,6 @@
     "es-shim-unscopables": "^1.0.0",
     "es-to-primitive": "^1.2.1",
     "escape-string-regexp": "^4.0.0",
-    "eslint-config-airbnb-base": "^15.0.0",
     "eslint-import-resolver-node": "^0.3.7",
     "eslint-module-utils": "^2.8.0",
     "eslint-scope": "^7.2.0",
