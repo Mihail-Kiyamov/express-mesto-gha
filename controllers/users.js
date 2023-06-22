@@ -8,7 +8,6 @@ module.exports.getAllUsers = (req, res) => {
 
 module.exports.getUser = (req, res) => {
   User.findById(req.params.id)
-    .populate('user')
     .then(user => res.send({ data: user }))
     .catch(err => {
       if (err.name === 'DocumentNotFoundError') return res.status(404).send({ message: 'Запрашиваемый пользователь не найден' });
