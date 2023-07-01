@@ -1,53 +1,66 @@
 const User = require('../models/users');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const NotFoundError = require('../errors/not-found-err');
+const AuthError = require('../errors/auth-err');
 
-module.exports.getAllUsers = (req, res) => {
-  User.find({})
-    .then((users) => res.send({ data: users }))
-    .catch((err) => res.status(500).send({ message: err.message }));
-};
+module.exports.login = (req, res, next) => {
+  const { email, password } = req.body;
 
-module.exports.getUser = (req, res) => {
-  User.findById(req.params.id)
+  return User.findUserByCredentials(email, password)
     .then((user) => {
-      if (!user) return res.status(404).send({ message: 'Запрашиваемый пользователь не найден' });
-      return res.send({ data: user });
+      const token = jwt.sign({ _id: user._id }, 'mesto-backend', { expiresIn: '7d' });
+      res.cookie('jwt', token, { httpOnly: true, maxAge: 3600000 * 24 * 7 }).end();
     })
     .catch((err) => {
-      if (err.name === 'DocumentNotFoundError') return res.status(404).send({ message: 'Запрашиваемый пользователь не найден' });
-      if (err.name === 'CastError') return res.status(400).send({ message: 'Переданы некорректные данные пользователя' });
-      return res.status(500).send({ message: err.message });
+      const authError = new AuthError(err.message);
+      next(authError);
     });
 };
 
-module.exports.createUser = (req, res) => {
-  const { name, about, avatar } = req.body;
-
-  User.create({ name, about, avatar })
-    .then((user) => res.status(201).send({ data: user }))
-    .catch((err) => {
-      if (err.name === 'ValidationError') return res.status(400).send({ message: 'Переданы некорректные данные создания профиля пользователя' });
-      return res.status(500).send({ message: err.message });
-    });
+module.exports.getAllUsers = (req, res, next) => {
+  User.find({})
+    .then((users) => res.send({ data: users }))
+    .catch(next);
 };
 
-module.exports.patchUser = (req, res) => {
+module.exports.getUser = (req, res, next) => {
+  User.findById(req.params.id)
+    .then((user) => {
+      if (!user) throw new NotFoundError('Запрашиваемый пользователь не найден');
+      return res.send({ data: user });
+    })
+    .catch(next);
+};
+
+module.exports.getCurrentUser = (req, res, next) => {
+  req.params.id = req.user._id;
+  this.getUser(req, res);
+};
+
+module.exports.createUser = (req, res, next) => {
+  const { name, about, avatar, email, password } = req.body;
+
+  bcrypt.hash(password, 10)
+    .then((hash) =>
+      User.create({ name, about, avatar, email, password: hash })
+        .then((user) => res.status(201).send({ data: user }))
+        .catch(next)
+    );
+};
+
+module.exports.patchUser = (req, res, next) => {
   const { name, about } = req.body;
 
   User.findByIdAndUpdate(req.user._id, { name, about }, { new: true, runValidators: true })
     .then((user) => res.send({ data: user }))
-    .catch((err) => {
-      if (err.name === 'ValidationError') return res.status(400).send({ message: 'Переданы некорректные данные обновления профиля пользовател' });
-      return res.status(500).send({ message: err.message });
-    });
+    .catch(next);
 };
 
-module.exports.patchUserAvatar = (req, res) => {
+module.exports.patchUserAvatar = (req, res, next) => {
   const { avatar } = req.body;
 
   User.findByIdAndUpdate(req.user._id, { avatar }, { new: true, runValidators: true })
     .then((user) => res.send({ data: user }))
-    .catch((err) => {
-      if (err.name === 'ValidationError') return res.status(400).send({ message: 'Переданы некорректные данные обновления аватара пользователя' });
-      return res.status(500).send({ message: err.name });
-    });
+    .catch(next);
 };
