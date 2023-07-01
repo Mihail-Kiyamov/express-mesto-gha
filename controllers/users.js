@@ -1,6 +1,6 @@
-const User = require('../models/users');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const User = require('../models/users');
 const NotFoundError = require('../errors/not-found-err');
 const AuthError = require('../errors/auth-err');
 
@@ -35,18 +35,28 @@ module.exports.getUser = (req, res, next) => {
 
 module.exports.getCurrentUser = (req, res, next) => {
   req.params.id = req.user._id;
-  this.getUser(req, res);
+  this.getUser(req, res, next);
 };
 
 module.exports.createUser = (req, res, next) => {
-  const { name, about, avatar, email, password } = req.body;
+  const {
+    name,
+    about,
+    avatar,
+    email,
+    password,
+  } = req.body;
 
   bcrypt.hash(password, 10)
-    .then((hash) =>
-      User.create({ name, about, avatar, email, password: hash })
-        .then((user) => res.status(201).send({ data: user }))
-        .catch(next)
-    );
+    .then((hash) => User.create({
+      name,
+      about,
+      avatar,
+      email,
+      password: hash,
+    })
+      .then((user) => res.status(201).send({ data: user }))
+      .catch(next));
 };
 
 module.exports.patchUser = (req, res, next) => {
