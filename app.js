@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
+const NotFoundError = require('./errors/not-found-err');
 const { errors, celebrate, Joi } = require('celebrate');
 const { login, createUser } = require('./controllers/users');
 const { auth } = require('./middlewares/auth');
@@ -29,9 +30,9 @@ app.post('/signup', celebrate({
     email: Joi.string().required().email(),
     password: Joi.string().required().min(8),
     name: Joi.string().optional().min(2).max(30),
-    avatar: Joi.string().regex(/https?:\/\/(www\.)?[0-9a-z.\-_~:/?#[\]@!$&'()*+,;=]+#?$/).optional(),
+    avatar: Joi.string().regex(/https?:\/\/(www\.)?[0-9a-z.\-_~:/?#[\]@!$&'()*+,;=]+\.[0-9a-z.\-_~:/?#[\]@!$&'()*+,;=]+#?$/).optional(),
     about: Joi.string().optional().min(2).max(30),
-  }).unknown(true),
+  }),
 }), createUser);
 
 app.use(auth);
@@ -39,8 +40,8 @@ app.use(auth);
 app.use('/users', require('./routes/users'));
 app.use('/cards', require('./routes/cards'));
 
-app.use((req, res) => {
-  res.status(404).send({ message: 'Некорректный путь' });
+app.use((req, res, next) => {
+  next(new NotFoundError('Некорректный путь'));
 });
 
 app.use(errors());
@@ -50,11 +51,12 @@ app.use((err, req, res, next) => {
   const message = statusCode === 500 ? 'На сервере произошла ошибка' : err.message;
 
   if (err.name === 'DocumentNotFoundError') res.status(404).send({ message: 'Запрашиваемые данные не найдены' });
-  if (err.name === 'CastError') res.status(400).send({ message: 'Переданы некорректные данные' });
-  if (err.name === 'ValidationError') res.status(400).send({ message: 'Переданы некорректные данные для создания' });
-  if (err.code === 11000) res.status(409).send({ message: 'Такой email уже существует' });
-
-  res.status(statusCode).send({ message });
+  else if (err.name === 'CastError') res.status(400).send({ message: 'Переданы некорректные данные' });
+  else if (err.name === 'ValidationError') res.status(400).send({ message: 'Переданы некорректные данные для создания' });
+  else if (err.code === 11000) res.status(409).send({ message: 'Такой email уже существует' });
+  else {
+    res.status(statusCode).send({ message });
+  }
 
   next();
 });
