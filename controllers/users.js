@@ -10,7 +10,7 @@ module.exports.login = (req, res, next) => {
   return User.findUserByCredentials(email, password)
     .then((user) => {
       const token = jwt.sign({ _id: user._id }, 'mesto-backend', { expiresIn: '7d' });
-      res.cookie('jwt', token, { httpOnly: true, maxAge: 3600000 * 24 * 7 }).end();
+      res.cookie('jwt', token, { httpOnly: true, maxAge: 3600000 * 24 * 7 }).send({});
     })
     .catch((err) => {
       const authError = new AuthError(err.message);
@@ -34,8 +34,12 @@ module.exports.getUser = (req, res, next) => {
 };
 
 module.exports.getCurrentUser = (req, res, next) => {
-  req.params.id = req.user._id;
-  this.getUser(req, res, next);
+  User.findById(req.user._id)
+    .then((user) => {
+      if (!user) throw new NotFoundError('Запрашиваемый пользователь не найден');
+      return res.send({ data: user });
+    })
+    .catch(next);
 };
 
 module.exports.createUser = (req, res, next) => {
@@ -55,7 +59,9 @@ module.exports.createUser = (req, res, next) => {
       email,
       password: hash,
     })
-      .then((user) => res.status(201).send({ data: user }))
+      .then((user) => {
+        res.status(201).send({ data: user });
+      })
       .catch(next));
 };
 

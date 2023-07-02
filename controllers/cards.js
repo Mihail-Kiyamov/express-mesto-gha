@@ -1,6 +1,7 @@
 const Card = require('../models/cards');
 const NotFoundError = require('../errors/not-found-err');
 const WrongDataError = require('../errors/wrong-data-err');
+const AccessError = require('../errors/access-err');
 
 module.exports.getAllCards = (req, res, next) => {
   Card.find({})
@@ -25,7 +26,7 @@ module.exports.deleteCard = (req, res, next) => {
         throw new NotFoundError('Запрашиваемая карточка не найдена');
       }
       if (card.owner._id !== req.user._id) {
-        throw new WrongDataError('Вы не являетесь хозяином карточки');
+        throw new AccessError('Вы не являетесь хозяином карточки');
       }
     })
     .then(() => {
