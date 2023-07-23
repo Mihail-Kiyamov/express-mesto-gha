@@ -24,6 +24,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.use(cors({
+  origin: 'https://domainname.mihailkiyamov.nomoredomains.xyz',
   credentials: true,
 }));
 
