@@ -28,7 +28,7 @@ module.exports.getUser = (req, res, next) => {
   User.findById(req.params.id)
     .then((user) => {
       if (!user) throw new NotFoundError('Запрашиваемый пользователь не найден');
-      return res.send({ data: user });
+      return res.send( user );
     })
     .catch((err) => {
       if (err.name === 'CastError') {
@@ -43,7 +43,7 @@ module.exports.getCurrentUser = (req, res, next) => {
   User.findById(req.user._id)
     .then((user) => {
       if (!user) throw new NotFoundError('Запрашиваемый пользователь не найден');
-      return res.send({ data: user });
+      return res.send( user );
     })
     .catch((err) => {
       if (err.name === 'CastError') {
@@ -72,7 +72,7 @@ module.exports.createUser = (req, res, next) => {
       password: hash,
     }))
     .then((user) => {
-      res.status(201).send({ data: user });
+      res.status(201).send( user );
     })
     .catch((err) => {
       if (err.code === 11000) {
@@ -88,7 +88,7 @@ module.exports.createUser = (req, res, next) => {
 module.exports.patchUser = (req, res, next) => {
   const { name, about } = req.body;
   User.findByIdAndUpdate(req.user._id, { name, about }, { new: true, runValidators: true })
-    .then((user) => res.send({ data: user }))
+    .then((user) => res.send( user ))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new WrongDataError('Некорректные данные'));
