@@ -5,7 +5,6 @@ const WrongDataError = require('../errors/wrong-data-err');
 
 module.exports.getAllCards = (req, res, next) => {
   Card.find({})
-    .populate('owner')
     .then((cards) => res.send( cards ))
     .catch(next);
 };
